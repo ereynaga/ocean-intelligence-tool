@@ -1310,7 +1310,7 @@ export default function App() {
       </section>
 
       {/* ── Main Content ── */}
-      <main className="max-w-7xl mx-auto px-6 py-10 space-y-8">
+      <main className="max-w-7xl mx-auto px-6 py-10 space-y-8 overflow-x-clip">
 
         {/* ── Weather Strip ── */}
         <div className="stagger-item flex items-center justify-between mb-2" data-dir="left">
@@ -1548,10 +1548,12 @@ export default function App() {
                         if (v.paused) v.play();
                         else v.pause();
                       }}
-                      className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                      className={`absolute inset-0 flex items-center justify-center transition-opacity duration-300 cursor-pointer ${
+                        isWhalePlaying ? "opacity-0 group-hover:opacity-100" : "opacity-100"
+                      }`}
                       aria-label={isWhalePlaying ? "Pause whale watching video" : "Play whale watching video"}
                     >
-                      <div className="w-12 h-12 rounded-full bg-ocean-900/70 border border-white/10 flex items-center justify-center backdrop-blur-sm">
+                      <div className="w-14 h-14 rounded-full bg-ocean-900/70 border border-white/15 flex items-center justify-center backdrop-blur-sm shadow-lg shadow-black/40 transition-transform group-hover:scale-105">
                         {isWhalePlaying ? (
                           <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="text-white">
                             <rect x="3" y="2" width="4" height="12" rx="1" />
