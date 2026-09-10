@@ -1,5 +1,9 @@
 import { useState, useRef, useEffect } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import svgPaths from "@/imports/CoverArt/svg-ftnfa319gk";
+
+gsap.registerPlugin(ScrollTrigger);
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -1142,6 +1146,53 @@ export default function App() {
     );
   }, [location.id]);
 
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      // Hero: image scales/fades in, copy reveals line by line
+      const hero = heroRef.current;
+      if (hero) {
+        const img = hero.querySelector("img");
+        const copy = hero.querySelectorAll("[data-hero-copy] > *");
+        gsap.set(img, { opacity: 0, scale: 1.08 });
+        gsap.set(copy, { opacity: 0, y: 28, filter: "blur(6px)" });
+        gsap
+          .timeline({ defaults: { ease: "expo.out" } })
+          .to(img, { opacity: 1, scale: 1, duration: 1.6, clearProps: "opacity,scale" })
+          .to(
+            copy,
+            { opacity: 1, y: 0, filter: "blur(0px)", duration: 1, stagger: 0.14, clearProps: "all" },
+            0.35
+          );
+      }
+
+      // Sections: staggered scroll-triggered reveals
+      const sections = gsap.utils.toArray<HTMLElement>(".stagger-item");
+      sections.forEach((section) => {
+        const dir = section.dataset.dir;
+        const items =
+          section.dataset.reveal === "children"
+            ? (Array.from(section.children) as HTMLElement[])
+            : [section];
+        const x = dir === "left" ? -40 : dir === "right" ? 40 : 0;
+        gsap.set(items, { opacity: 0, x, y: 40, scale: 0.96, filter: "blur(10px)" });
+        gsap.to(items, {
+          opacity: 1,
+          x: 0,
+          y: 0,
+          scale: 1,
+          filter: "blur(0px)",
+          duration: 1.1,
+          ease: "expo.out",
+          stagger: { each: 0.09, from: dir === "right" ? "end" : "start" },
+          clearProps: "all",
+          scrollTrigger: { trigger: section, start: "top 88%", once: true },
+        });
+      });
+    });
+    ScrollTrigger.refresh();
+    return () => ctx.revert();
+  }, [location.id]);
+
   const riskColor =
     location.hurricane.riskLevel === "Low"
       ? "text-teal-glow"
@@ -1153,18 +1204,19 @@ export default function App() {
 
   return (
     <div className="min-h-full bg-ocean-900 text-ocean-100">
+
       {/* ── Nav ── */}
-      <header className="sticky top-4 z-50 mx-auto max-w-7xl rounded-2xl glass-card shadow-2xl shadow-black/40">
-        <div className="px-6 h-16 flex items-center justify-between">
+      <header className="sticky top-6 z-50 mx-auto w-[calc(100%-2rem)] max-w-7xl rounded-2xl glass-card shadow-2xl shadow-black/40">
+        <div className="px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
           {/* Brand */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <img
               src="/logo.png"
               alt="Open Ocean"
-              className="h-8 w-auto object-contain"
+              className="h-6 sm:h-8 w-auto object-contain"
             />
             <div>
-              <span className="font-display text-lg font-semibold text-ocean-100 tracking-tight">
+              <span className="font-display text-base sm:text-lg font-semibold text-ocean-100 tracking-tight">
                 Open Ocean
               </span>
             </div>
@@ -1174,7 +1226,7 @@ export default function App() {
           <div ref={dropdownRef} className="relative">
             <button
               onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="flex items-center gap-2 glass-card rounded-lg px-4 py-2 hover:border-teal-dim/40 transition-colors cursor-pointer group"
+              className="flex items-center gap-2 glass-card rounded-lg px-3 sm:px-4 py-2 hover:border-teal-dim/40 transition-colors cursor-pointer group"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -1189,8 +1241,8 @@ export default function App() {
                 <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" />
                 <circle cx="12" cy="10" r="3" />
               </svg>
-              <span className="text-sm font-medium text-ocean-100">{location.name}</span>
-              <span className="text-ocean-300 text-xs">,&nbsp;{location.country}</span>
+              <span className="text-xs sm:text-sm font-medium text-ocean-100">{location.name}</span>
+              <span className="hidden sm:inline text-ocean-300 text-xs">,&nbsp;{location.country}</span>
               <svg
                 className={`w-4 h-4 text-ocean-300 transition-transform ${dropdownOpen ? "rotate-180" : ""}`}
                 fill="none" viewBox="0 0 24 24" stroke="currentColor"
@@ -1222,12 +1274,13 @@ export default function App() {
       </header>
 
       {/* ── Hero ── */}
-      <section ref={heroRef} className="relative -mt-17 h-[80vh] min-h-[340px] overflow-hidden">
+      <section ref={heroRef} className="relative -mt-22 h-[80vh] min-h-[340px] overflow-hidden bg-ocean-900">
         <img
+          key={location.id}
           src={location.heroImage}
           alt={location.heroAlt}
-          className="absolute inset-0 w-full h-full object-cover transition-opacity duration-700"
-          style={{ transform: `translateY(${scrollY * 0.15}px)` }}
+          className="absolute inset-0 w-full h-[115%] object-cover"
+          style={{ translate: `0 ${scrollY * 0.15}px` }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-ocean-900/30 via-ocean-900/20 to-ocean-900" />
         <div className="absolute inset-0 bg-gradient-to-r from-ocean-900/60 via-transparent to-transparent" />
@@ -1242,11 +1295,11 @@ export default function App() {
           );
         })()}
         <div className="relative h-full flex flex-col justify-end max-w-7xl mx-auto px-6 pb-2">
-          <div className="max-w-xl">
+          <div className="max-w-xl" data-hero-copy>
             <span className="font-mono text-xs text-teal-glow uppercase tracking-widest mb-2 block">
               {location.region} · {location.coords}
             </span>
-            <h1 className="font-display text-5xl font-light text-white leading-tight mb-2 glow-teal">
+            <h1 className="font-display text-4xl sm:text-5xl font-light text-white leading-tight mb-2 glow-teal">
               {location.name}
             </h1>
             <p className="text-ocean-200 text-sm leading-relaxed max-w-md">
@@ -1260,22 +1313,22 @@ export default function App() {
       <main className="max-w-7xl mx-auto px-6 py-10 space-y-8">
 
         {/* ── Weather Strip ── */}
-        <div className="flex items-center justify-between mb-2">
-          <div className="font-mono text-xs text-teal-glow uppercase tracking-widest">Current Conditions</div>
+        <div className="stagger-item flex items-center justify-between mb-2" data-dir="left">
+          <div className="font-mono text-[10px] sm:text-xs text-teal-glow uppercase tracking-widest">Current Conditions</div>
           {lastUpdated && (
-            <div className="font-mono text-xs text-ocean-300">
+            <div className="font-mono text-[10px] sm:text-xs text-ocean-300">
               Updated {lastUpdated}
             </div>
           )}
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="stagger-item grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3" data-reveal="children">
           {/* Temperature & Condition */}
-          <div className="glass-card rounded-xl p-4 col-span-2 overflow-hidden">
-            <div className="grid grid-cols-[7rem_1fr_auto] gap-3 items-center">
-              <div className="w-28 h-[calc(var(--spacing)*21)]">
+          <div className="glass-card rounded-xl p-4 col-span-2 overflow-hidden relative">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="w-28 h-[calc(var(--spacing)*21)] shrink-0 -ml-4">
                 <ConditionIcon condition={location.weather.condition} className="w-full h-full object-contain" />
               </div>
-              <div>
+              <div className="flex-1 min-w-[8rem]">
                 <div className="font-mono text-sm font-medium text-white">
                   {location.weather.condition}
                 </div>
@@ -1290,9 +1343,9 @@ export default function App() {
               </div>
               <button
                 onClick={() => setTempUnit(tempUnit === "C" ? "F" : "C")}
-                className="text-teal-dim hover:text-teal-glow transition-colors cursor-pointer text-xs self-center justify-self-end"
+                className="absolute top-4 right-4 sm:static sm:self-center text-teal-dim hover:text-teal-glow transition-colors cursor-pointer text-xs shrink-0"
               >
-                Switch to °{tempUnit === "C" ? "F" : "C"}
+                <span className="hidden sm:inline">Switch to </span>°{tempUnit === "C" ? "F" : "C"}
               </button>
             </div>
           </div>
@@ -1335,7 +1388,7 @@ export default function App() {
         </div>
 
         {/* ── Moon & Tide ── */}
-        <div className="glass-card rounded-2xl p-6 !mt-3">
+        <div className="stagger-item glass-card rounded-2xl p-6 !mt-3" data-dir="bottom">
           <div className="grid grid-cols-1 md:grid-cols-[auto_1fr] gap-6 items-center">
             <div className="flex items-center gap-4">
               <div className="w-14 h-14 rounded-full bg-ocean-800/60 flex items-center justify-center text-amber-warn shrink-0">
@@ -1356,7 +1409,7 @@ export default function App() {
         </div>
 
         {/* ── Marine Life & Hurricane Grid ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+        <div className="stagger-item grid grid-cols-1 lg:grid-cols-3 gap-3" data-reveal="children" data-dir="left">
 
           {/* Marine Life Panel — takes 2 cols */}
           <div className="lg:col-span-2 glass-card rounded-2xl overflow-hidden">
@@ -1366,7 +1419,7 @@ export default function App() {
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`flex-1 py-4 font-mono text-xs uppercase tracking-widest transition-colors cursor-pointer ${
+                  className={`flex-1 px-3 py-4 font-mono text-xs uppercase tracking-widest transition-colors cursor-pointer ${
                     activeTab === tab
                       ? "text-teal-glow border-b-2 border-teal-glow bg-teal-glow/5"
                       : "text-ocean-300 hover:text-ocean-200"
@@ -1649,22 +1702,23 @@ export default function App() {
 
         {/* ── Travel Tips ── */}
         <div>
-          <div className="mb-5">
+          <div className="stagger-item mb-5" data-dir="left">
             <h2 className="font-display text-2xl text-white font-light">
               Travel Intelligence
             </h2>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="stagger-item grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3" data-reveal="children">
             {location.tips.map((tip) => (
               <div
                 key={tip.title}
                 className="tip-card glass-card rounded-xl p-5"
               >
                 {tip.icon.startsWith("/") ? (
-                  <img
-                    src={tip.icon}
-                    alt={tip.title}
-                    className="w-12 h-12 object-cover mb-3 rounded-md activity-icon-amber"
+                  <span
+                    role="img"
+                    aria-label={tip.title}
+                    className="block w-12 h-12 mb-3 activity-icon activity-icon-teal"
+                    style={{ maskImage: `url(${tip.icon})`, WebkitMaskImage: `url(${tip.icon})` }}
                   />
                 ) : (
                   <div className="text-2xl mb-3">{tip.icon}</div>
@@ -1677,11 +1731,12 @@ export default function App() {
         </div>
 
         {/* ── Seasonal Overview Strip ── */}
-        <div className="glass-card rounded-2xl p-6">
+        <div className="stagger-item glass-card rounded-2xl p-6" data-dir="right">
           <h2 className="font-display text-xl text-white font-light mb-5">
             Annual Marine Calendar
           </h2>
-          <div className="grid grid-cols-12 gap-1 mb-3">
+          <div className="overflow-x-auto pb-1">
+            <div className="grid grid-cols-12 gap-1 mb-3 min-w-[360px]">
             {["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"].map(
               (month, i) => {
                 const isTurtleSeason = (() => {
@@ -1720,7 +1775,7 @@ export default function App() {
                 return (
                   <div key={month} className="text-center">
                     <div
-                      className={`font-mono text-xs mb-1 uppercase tracking-wider ${
+                      className={`font-mono text-[10px] sm:text-xs mb-1 uppercase tracking-wider ${
                         isCurrentMonth ? "text-teal-glow font-medium" : "text-ocean-400"
                       }`}
                     >
@@ -1751,7 +1806,8 @@ export default function App() {
               }
             )}
           </div>
-          <div className="flex gap-5 mt-2">
+          </div>
+          <div className="flex flex-wrap justify-center gap-3 sm:gap-5 mt-2">
             {[
               { color: "bg-teal-glow/70", label: "Turtle Nesting" },
               { color: "bg-ocean-300/70", label: "Whale Season" },
@@ -1759,19 +1815,19 @@ export default function App() {
             ].map((item) => (
               <div key={item.label} className="flex items-center gap-1.5">
                 <div className={`w-3 h-3 rounded-sm ${item.color}`} />
-                <span className="font-mono text-xs text-ocean-300">{item.label}</span>
+                <span className="font-mono text-[10px] sm:text-xs text-ocean-300">{item.label}</span>
               </div>
             ))}
             <div className="flex items-center gap-1.5">
               <div className="w-1 h-1 rounded-full bg-teal-glow" />
-              <span className="font-mono text-xs text-ocean-300">Current Month</span>
+              <span className="font-mono text-[10px] sm:text-xs text-ocean-300">Current Month</span>
             </div>
           </div>
         </div>
       </main>
 
       {/* ── Footer ── */}
-      <footer className="py-5 text-center">
+      <footer className="stagger-item py-5 px-4 text-center" data-dir="bottom">
         <span
           className="text-xs text-ocean-300"
           style={{ fontFamily: "'Jura', sans-serif", lineHeight: "22px", letterSpacing: "0.4px" }}
@@ -1781,7 +1837,7 @@ export default function App() {
             href="https://www.edgarreynaga.com/"
             target="_blank"
             rel="noopener noreferrer"
-            className="underline underline-offset-2"
+            className="underline underline-offset-2 whitespace-nowrap"
           >
             Edgar Reynaga
           </a>

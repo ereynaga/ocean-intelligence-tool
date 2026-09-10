@@ -102,22 +102,24 @@ body {
 }
 
 .tip-card:hover {
-  transform: translateY(-2px);
+  translate: 0 -2px;
   border-color: rgba(0, 212, 200, 0.35);
 }
 .tip-card {
-  transition: transform 0.25s ease, border-color 0.25s ease;
+  transition: translate 0.25s ease, border-color 0.25s ease;
 }
 
-.activity-icon-amber {
-  filter: brightness(0) invert(1) sepia(1) saturate(500%) hue-rotate(-15deg) brightness(1.1);
+.activity-icon {
+  mask-size: cover;
+  mask-position: center;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: cover;
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
 }
-.activity-icon-teal {
-  filter: brightness(0) invert(1) sepia(1) saturate(300%) hue-rotate(120deg) brightness(1.1);
-}
-.activity-icon-red {
-  filter: brightness(0) invert(1) sepia(1) saturate(500%) hue-rotate(-45deg) brightness(1.1);
-}
+.activity-icon-amber { background-color: #f5a623; }
+.activity-icon-teal  { background-color: #00d4c8; }
+.activity-icon-red   { background-color: #e5383b; }
 
 .stat-ring {
   position: relative;
