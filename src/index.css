@@ -72,6 +72,35 @@ body {
   border: 1px solid rgba(74, 159, 212, 0.15);
 }
 
+.glass-nav {
+  isolation: isolate;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 45%, rgba(255, 255, 255, 0) 100%),
+    rgba(6, 14, 26, 0.55);
+  backdrop-filter: blur(28px) saturate(160%) brightness(0.85);
+  -webkit-backdrop-filter: blur(28px) saturate(160%) brightness(0.85);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.04),
+    0 1px 2px rgba(0, 0, 0, 0.25),
+    0 20px 50px -20px rgba(0, 0, 0, 0.7);
+}
+.glass-nav::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(120% 140% at 50% -40%, rgba(133, 200, 238, 0.22), transparent 60%);
+}
+.glass-nav button.glass-card {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.14);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
 .glow-teal {
   text-shadow: 0 0 20px rgba(0, 212, 200, 0.4);
 }

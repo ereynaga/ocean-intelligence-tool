@@ -1206,7 +1206,7 @@ export default function App() {
     <div className="min-h-full bg-ocean-900 text-ocean-100">
 
       {/* ── Nav ── */}
-      <header className="sticky top-6 z-50 mx-auto w-[calc(100%-2rem)] max-w-7xl rounded-2xl glass-card shadow-2xl shadow-black/40">
+      <header className="sticky top-6 z-50 mx-auto w-[calc(100%-2rem)] max-w-7xl rounded-2xl glass-nav">
         <div className="px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
           {/* Brand */}
           <div className="flex items-center gap-2 sm:gap-3">
