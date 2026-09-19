@@ -92,8 +92,7 @@ const locations: Location[] = [
     country: "Dominican Republic",
     region: "Caribbean",
     coords: "18.5820° N, 68.4063° W",
-    heroImage:
-      "https://images.unsplash.com/photo-1781901340491-4b7220d28f2f?q=80&w=3432&auto=format&fit=crop",
+    heroImage: "/hero-puntacana.png",
     heroAlt: "Aerial view of Punta Cana beach and turquoise Caribbean waters",
     description:
       "Where the Atlantic meets the Caribbean — powder-white palms and some of the richest marine biodiversity in the hemisphere.",
@@ -192,8 +191,7 @@ const locations: Location[] = [
     country: "Mexico",
     region: "Caribbean",
     coords: "21.1619° N, 86.8515° W",
-    heroImage:
-      "https://images.unsplash.com/photo-1523288631581-53d290528bdd?q=80&w=3348&auto=format&fit=crop",
+    heroImage: "/hero-cancun.png",
     heroAlt: "Aerial view of Cancun beach with turquoise Caribbean water",
     description:
       "Limestone cenotes, coral shelf, and a 1,000 km barrier reef flanking one of the world's most visited coastlines.",
@@ -292,8 +290,7 @@ const locations: Location[] = [
     country: "United States",
     region: "Pacific",
     coords: "20.7984° N, 156.3319° W",
-    heroImage:
-      "https://images.unsplash.com/photo-1723152414774-bee3aeac28cb?q=100&w=3348&auto=format&fit=crop",
+    heroImage: "/hero-maui.png",
     heroAlt: "Humpback whale breaching in Pacific Ocean near Maui Hawaii",
     description:
       "Valley Isle of volcanic origin — where the North Pacific humpback highway runs directly through Maui Nui Basin.",
@@ -392,8 +389,7 @@ const locations: Location[] = [
     country: "Maldives",
     region: "Indian Ocean",
     coords: "3.2028° N, 73.2207° E",
-    heroImage:
-      "https://images.unsplash.com/photo-1541417904950-b855846fe074?q=100&w=3482&auto=format&fit=crop",
+    heroImage: "/hero-maldives.png",
     heroAlt: "Sea turtle swimming near vibrant coral reef in Maldives",
     description:
       "1,200 islands at sea level — the most threatened archipelago on Earth and the world's most biodiverse reef system.",
@@ -492,8 +488,7 @@ const locations: Location[] = [
     country: "Australia",
     region: "Pacific",
     coords: "18.2871° S, 147.6992° E",
-    heroImage:
-      "https://images.unsplash.com/photo-1551244072-5d12893278ab?q=100&w=3432&auto=format&fit=crop",
+    heroImage: "/hero-greatbarrierreef.png",
     heroAlt: "Sea turtle swimming near coral reef in Great Barrier Reef Australia",
     description:
       "3 million km² of living reef — the largest structure built by living organisms and a World Heritage Site under active ecological stress.",
@@ -586,6 +581,28 @@ const locations: Location[] = [
     ],
   },
 ];
+
+// ─── Image Loading ────────────────────────────────────────────────────────────
+
+function preloadImage(src: string, timeoutMs = 6000) {
+  return new Promise<void>((resolve) => {
+    const image = new Image();
+    const timer = window.setTimeout(resolve, timeoutMs);
+    image.onload = () => {
+      window.clearTimeout(timer);
+      if (typeof image.decode === "function") {
+        image.decode().catch(() => undefined).finally(resolve);
+      } else {
+        resolve();
+      }
+    };
+    image.onerror = () => {
+      window.clearTimeout(timer);
+      resolve();
+    };
+    image.src = src;
+  });
+}
 
 // ─── Sub-Components ──────────────────────────────────────────────────────────
 
@@ -1083,6 +1100,41 @@ function MoonIcon({ className }: { className?: string }) {
   );
 }
 
+// ─── Loading Overlay ──────────────────────────────────────────────────────────
+
+function LoadingOverlay({ progress, show }: { progress: number; show: boolean }) {
+  const percent = Math.round(progress * 100);
+  return (
+    <div
+      className={`fixed inset-0 z-[100] flex items-center justify-center bg-ocean-900 transition-opacity duration-700 ${
+        show ? "opacity-100" : "opacity-0 pointer-events-none"
+      }`}
+      aria-hidden={!show}
+    >
+      <div className="flex flex-col items-center">
+        <div className="relative w-40 h-40 flex items-center justify-center">
+          <div className="absolute inset-0 rounded-full border border-teal-glow/20 animate-[ripple_1.8s_ease-out_infinite]" />
+          <div className="absolute inset-0 rounded-full border border-teal-glow/30 animate-[ripple_1.8s_ease-out_infinite]" style={{ animationDelay: "0.35s" }} />
+          <div className="absolute inset-0 rounded-full border border-teal-glow/40 animate-[ripple_1.8s_ease-out_infinite]" style={{ animationDelay: "0.7s" }} />
+          <div className="relative z-10 w-24 h-24 rounded-full glass-nav flex items-center justify-center">
+            <img src="/logo.png" alt="Open Ocean" className="h-10 w-auto object-contain" />
+          </div>
+        </div>
+        <div className="mt-8 font-mono text-[10px] uppercase tracking-[0.35em] text-teal-glow">
+          Open Ocean
+        </div>
+        <div className="mt-5 w-48 h-px bg-white/10 overflow-hidden rounded-full">
+          <div
+            className="h-full bg-teal-glow transition-[width] duration-300 ease-out"
+            style={{ width: `${percent}%` }}
+          />
+        </div>
+        <div className="mt-2 font-mono text-[10px] text-ocean-300">{percent}%</div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main App ─────────────────────────────────────────────────────────────────
 
 export default function App() {
@@ -1094,10 +1146,17 @@ export default function App() {
   const [whaleProgress, setWhaleProgress] = useState(0);
   const [scrollY, setScrollY] = useState(0);
   const [lastUpdated, setLastUpdated] = useState("");
+  const [assetsReady, setAssetsReady] = useState(false);
+  const [assetProgress, setAssetProgress] = useState(0);
   const whaleVideoRef = useRef<HTMLVideoElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLElement>(null);
   const location = locations.find((l) => l.id === selectedId)!;
+
+  const handleLocationSelect = (id: string) => {
+    setSelectedId(id);
+    setDropdownOpen(false);
+  };
 
   const highC = location.weather.tempC + 3;
   const lowC = location.weather.tempC - 4;
@@ -1147,14 +1206,39 @@ export default function App() {
   }, [location.id]);
 
   useEffect(() => {
+    let cancelled = false;
+    setAssetProgress(0);
+
+    Promise.all(
+      locations.map((item) =>
+        preloadImage(item.heroImage).then(() => {
+          if (!cancelled) setAssetProgress((value) => value + 1);
+        })
+      )
+    ).then(() => {
+      if (!cancelled) setAssetsReady(true);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
     const ctx = gsap.context(() => {
-      // Hero: image scales/fades in, copy reveals line by line
       const hero = heroRef.current;
       if (hero) {
         const img = hero.querySelector("img");
         const copy = hero.querySelectorAll("[data-hero-copy] > *");
         gsap.set(img, { opacity: 0, scale: 1.08 });
         gsap.set(copy, { opacity: 0, y: 28, filter: "blur(6px)" });
+      }
+
+      if (!assetsReady) return;
+
+      if (hero) {
+        const img = hero.querySelector("img");
+        const copy = hero.querySelectorAll("[data-hero-copy] > *");
         gsap
           .timeline({ defaults: { ease: "expo.out" } })
           .to(img, { opacity: 1, scale: 1, duration: 1.6, clearProps: "opacity,scale" })
@@ -1165,7 +1249,6 @@ export default function App() {
           );
       }
 
-      // Sections: staggered scroll-triggered reveals
       const sections = gsap.utils.toArray<HTMLElement>(".stagger-item");
       sections.forEach((section) => {
         const dir = section.dataset.dir;
@@ -1189,9 +1272,9 @@ export default function App() {
         });
       });
     });
-    ScrollTrigger.refresh();
+    if (assetsReady) ScrollTrigger.refresh();
     return () => ctx.revert();
-  }, [location.id]);
+  }, [location.id, assetsReady]);
 
   const riskColor =
     location.hurricane.riskLevel === "Low"
@@ -1204,6 +1287,7 @@ export default function App() {
 
   return (
     <div className="min-h-full bg-ocean-900 text-ocean-100">
+      <LoadingOverlay progress={assetProgress / locations.length} show={!assetsReady} />
 
       {/* ── Nav ── */}
       <header className="sticky top-6 z-50 mx-auto w-[calc(100%-2rem)] max-w-7xl rounded-2xl glass-nav">
@@ -1255,7 +1339,7 @@ export default function App() {
                 {locations.slice().reverse().map((loc) => (
                   <button
                     key={loc.id}
-                    onClick={() => { setSelectedId(loc.id); setDropdownOpen(false); }}
+                    onClick={() => handleLocationSelect(loc.id)}
                     className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-white/5 transition-colors cursor-pointer ${
                       loc.id === selectedId ? "bg-teal-glow/10 border-l-2 border-teal-glow" : ""
                     }`}
@@ -1274,11 +1358,14 @@ export default function App() {
       </header>
 
       {/* ── Hero ── */}
-      <section ref={heroRef} className="relative -mt-22 h-[80vh] min-h-[340px] overflow-hidden bg-ocean-900">
+      <section ref={heroRef} className="relative -mt-22 h-[80vh] min-h-[340px] overflow-hidden bg-ocean-900" aria-busy={!assetsReady}>
         <img
           key={location.id}
           src={location.heroImage}
           alt={location.heroAlt}
+          loading="eager"
+          decoding="async"
+          fetchPriority="high"
           className="absolute inset-0 w-full h-[115%] object-cover"
           style={{ translate: `0 ${scrollY * 0.15}px` }}
         />
