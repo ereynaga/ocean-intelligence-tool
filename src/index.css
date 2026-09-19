@@ -132,13 +132,6 @@ body {
   to { stroke-dashoffset: -36; }
 }
 
-.tip-card:hover {
-  translate: 0 -2px;
-  border-color: rgba(0, 212, 200, 0.35);
-}
-.tip-card {
-  transition: translate 0.25s ease, border-color 0.25s ease;
-}
 
 .activity-icon {
   mask-size: cover;

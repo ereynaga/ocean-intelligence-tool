@@ -1231,7 +1231,7 @@ export default function App() {
         const img = hero.querySelector("img");
         const copy = hero.querySelectorAll("[data-hero-copy] > *");
         gsap.set(img, { opacity: 0, scale: 1.08 });
-        gsap.set(copy, { opacity: 0, y: 28, filter: "blur(6px)" });
+        gsap.set(copy, { opacity: 0, y: 28 });
       }
 
       if (!assetsReady) return;
@@ -1244,7 +1244,7 @@ export default function App() {
           .to(img, { opacity: 1, scale: 1, duration: 1.6, clearProps: "opacity,scale" })
           .to(
             copy,
-            { opacity: 1, y: 0, filter: "blur(0px)", duration: 1, stagger: 0.14, clearProps: "all" },
+            { opacity: 1, y: 0, duration: 1, stagger: 0.14, clearProps: "all" },
             0.35
           );
       }
@@ -1257,13 +1257,12 @@ export default function App() {
             ? (Array.from(section.children) as HTMLElement[])
             : [section];
         const x = dir === "left" ? -40 : dir === "right" ? 40 : 0;
-        gsap.set(items, { opacity: 0, x, y: 40, scale: 0.96, filter: "blur(10px)" });
+        gsap.set(items, { opacity: 0, x, y: 40, scale: 0.96 });
         gsap.to(items, {
           opacity: 1,
           x: 0,
           y: 0,
           scale: 1,
-          filter: "blur(0px)",
           duration: 1.1,
           ease: "expo.out",
           stagger: { each: 0.09, from: dir === "right" ? "end" : "start" },
@@ -1916,7 +1915,7 @@ export default function App() {
       </main>
 
       {/* ── Footer ── */}
-      <footer className="stagger-item py-5 px-4 text-center" data-dir="bottom">
+      <footer className="py-5 px-4 text-center">
         <span
           className="text-xs text-ocean-300"
           style={{ fontFamily: "'Jura', sans-serif", lineHeight: "22px", letterSpacing: "0.4px" }}
