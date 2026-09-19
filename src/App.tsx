@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import svgPaths from "@/imports/CoverArt/svg-ftnfa319gk";
@@ -1144,16 +1144,17 @@ export default function App() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [isWhalePlaying, setIsWhalePlaying] = useState(false);
   const [whaleProgress, setWhaleProgress] = useState(0);
-  const [scrollY, setScrollY] = useState(0);
   const [lastUpdated, setLastUpdated] = useState("");
   const [assetsReady, setAssetsReady] = useState(false);
   const [assetProgress, setAssetProgress] = useState(0);
   const whaleVideoRef = useRef<HTMLVideoElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLElement>(null);
+  const scrollRestoreRef = useRef<number | null>(null);
   const location = locations.find((l) => l.id === selectedId)!;
 
   const handleLocationSelect = (id: string) => {
+    scrollRestoreRef.current = window.scrollY;
     setSelectedId(id);
     setDropdownOpen(false);
   };
@@ -1184,14 +1185,13 @@ export default function App() {
     return () => cancelAnimationFrame(raf);
   }, [isWhalePlaying]);
 
-  useEffect(() => {
-    function handleScroll() {
-      setScrollY(window.scrollY);
-    }
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll();
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  useLayoutEffect(() => {
+    const y = scrollRestoreRef.current;
+    if (y == null) return;
+    scrollRestoreRef.current = null;
+    window.scrollTo(0, y);
+    requestAnimationFrame(() => window.scrollTo(0, y));
+  }, [location.id]);
 
   useEffect(() => {
     const now = new Date();
@@ -1232,6 +1232,33 @@ export default function App() {
         const copy = hero.querySelectorAll("[data-hero-copy] > *");
         gsap.set(img, { opacity: 0, scale: 1.08 });
         gsap.set(copy, { opacity: 0, y: 28 });
+
+        gsap.to(hero.querySelector("[data-hero-parallax]"), {
+          yPercent: 15,
+          ease: "none",
+          scrollTrigger: {
+            trigger: hero,
+            start: "top top",
+            end: "bottom top",
+            scrub: 0.5,
+            onRefresh: (self) => self.animation?.progress(self.progress),
+          },
+        });
+        gsap.fromTo(
+          hero.querySelector("[data-hero-fade]"),
+          { opacity: 0 },
+          {
+            opacity: 1,
+            ease: "none",
+            scrollTrigger: {
+              trigger: hero,
+              start: "top top",
+              end: "80% top",
+              scrub: 0.5,
+              onRefresh: (self) => self.animation?.progress(self.progress),
+            },
+          }
+        );
       }
 
       if (!assetsReady) return;
@@ -1289,7 +1316,7 @@ export default function App() {
       <LoadingOverlay progress={assetProgress / locations.length} show={!assetsReady} />
 
       {/* ── Nav ── */}
-      <header className="sticky top-6 z-50 mx-auto w-[calc(100%-2rem)] max-w-7xl rounded-2xl glass-nav">
+      <header className="fixed top-6 inset-x-0 z-50 mx-auto w-[calc(100%-2rem)] max-w-7xl rounded-2xl glass-nav">
         <div className="px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
           {/* Brand */}
           <div className="flex items-center gap-2 sm:gap-3">
@@ -1357,29 +1384,24 @@ export default function App() {
       </header>
 
       {/* ── Hero ── */}
-      <section ref={heroRef} className="relative -mt-22 h-[80vh] min-h-[340px] overflow-hidden bg-ocean-900" aria-busy={!assetsReady}>
-        <img
-          key={location.id}
-          src={location.heroImage}
-          alt={location.heroAlt}
-          loading="eager"
-          decoding="async"
-          fetchPriority="high"
-          className="absolute inset-0 w-full h-[115%] object-cover"
-          style={{ translate: `0 ${scrollY * 0.15}px` }}
-        />
+      <section ref={heroRef} className="relative h-[80vh] min-h-[340px] overflow-hidden bg-ocean-900" aria-busy={!assetsReady}>
+        <div className="absolute inset-x-0 top-0 h-[115%]" data-hero-parallax>
+          <img
+            key={location.id}
+            src={location.heroImage}
+            alt={location.heroAlt}
+            loading="eager"
+            decoding="async"
+            fetchPriority="high"
+            className="w-full h-full object-cover"
+          />
+        </div>
         <div className="absolute inset-0 bg-gradient-to-b from-ocean-900/30 via-ocean-900/20 to-ocean-900" />
         <div className="absolute inset-0 bg-gradient-to-r from-ocean-900/60 via-transparent to-transparent" />
-        {(() => {
-          const heroHeight = heroRef.current?.offsetHeight || (typeof window !== "undefined" ? window.innerHeight * 0.8 : 600);
-          const progress = Math.min(scrollY / (heroHeight * 0.8), 1);
-          return (
-            <div
-              className="absolute inset-0 bg-ocean-900 pointer-events-none"
-              style={{ opacity: progress }}
-            />
-          );
-        })()}
+        <div
+          className="absolute inset-0 bg-ocean-900 pointer-events-none opacity-0"
+          data-hero-fade
+        />
         <div className="relative h-full flex flex-col justify-end max-w-7xl mx-auto px-6 pb-2">
           <div className="max-w-xl" data-hero-copy>
             <span className="font-mono text-xs text-teal-glow uppercase tracking-widest mb-2 block">
